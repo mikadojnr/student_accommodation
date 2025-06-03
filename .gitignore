@@ -1,0 +1,40 @@
+# Ignore PHPStorm and other IDE config files
+.idea/
+.vscode/
+
+# Composer vendor directory
+/vendor/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+/storage/logs/
+*.log
+
+# Cache and temp files
+*.cache
+*.tmp
+*.swp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+
+
+# PHPUnit test results
+.phpunit.result.cache
+
+# Ignore compiled files
+*.class
+*.o
+*.so
+
+# Ignore migrations lock or temporary files
+database/migrations/*.lock
+
+# Ignore backup files
+*~
