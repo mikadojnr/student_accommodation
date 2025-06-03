@@ -8,30 +8,12 @@ use App\Models\User;
 
 class HomeController
 {
-    // public function index()
-    // {
-    //     echo "Welcome home";
-    //     // $featuredProperties = Property::getFeatured(6);
-    //     // $recentProperties = Property::getRecentlyAdded(6);
-    //     // $stats = Property::getStatistics();
-
-    //     // View::render('home/index', [
-    //     //     'title' => 'SecureStay - Safe Student Accommodation',
-    //     //     'featuredProperties' => $featuredProperties,
-    //     //     'recentProperties' => $recentProperties,
-    //     //     'stats' => $stats
-    //     // ]);
-    // }
-
     public function index()
     {
-        echo "Step 1<br>";
-        $featuredProperties = \App\Models\Property::getFeatured(6);
-        echo "Step 2<br>";
-        $recentProperties = \App\Models\Property::getRecentlyAdded(6);
-        echo "Step 3<br>";
-        $stats = \App\Models\Property::getStatistics();
-        echo "Step 4<br>";
+        // echo "Welcome home";
+        $featuredProperties = Property::getFeatured(6);
+        $recentProperties = Property::getRecentlyAdded(6);
+        $stats = Property::getStatistics();
 
         View::render('home/index', [
             'title' => 'SecureStay - Safe Student Accommodation',
@@ -40,6 +22,24 @@ class HomeController
             'stats' => $stats
         ]);
     }
+
+    // public function index()
+    // {
+    //     echo "Step 1<br>";
+    //     $featuredProperties = \App\Models\Property::getFeatured(6);
+    //     echo "Step 2<br>";
+    //     $recentProperties = \App\Models\Property::getRecentlyAdded(6);
+    //     echo "Step 3<br>";
+    //     $stats = \App\Models\Property::getStatistics();
+    //     echo "Step 4<br>";
+
+    //     View::render('home/index', [
+    //         'title' => 'SecureStay - Safe Student Accommodation',
+    //         'featuredProperties' => $featuredProperties,
+    //         'recentProperties' => $recentProperties,
+    //         'stats' => $stats
+    //     ]);
+    // }
 
 
     public function howItWorks()
