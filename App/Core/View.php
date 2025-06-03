@@ -14,14 +14,11 @@ class View
             throw new \Exception("View file not found: $viewFile");
         }
 
-        // Start output buffering
         ob_start();
         include $viewFile;
         $content = ob_get_clean();
 
-        // If the view doesn't use a layout, return content directly
         if (strpos($content, '<?= $content ?>') === false) {
-            // Check if we need to wrap in layout
             if (!isset($layout) || $layout !== false) {
                 $layout = $layout ?? 'layouts.main';
                 $layoutFile = BASE_PATH . '/resources/views/' . str_replace('.', '/', $layout) . '.php';
@@ -29,13 +26,15 @@ class View
                 if (file_exists($layoutFile)) {
                     ob_start();
                     include $layoutFile;
-                    return ob_get_clean();
+                    echo ob_get_clean();  // <-- echo here
+                    return;               // stop after echoing layout
                 }
             }
         }
 
-        return $content;
+        echo $content;  // <-- echo here
     }
+
 
     public static function json($data, $statusCode = 200)
     {

@@ -1,5 +1,3 @@
-
-
 <div class="min-h-screen">
     <!-- Hero Section -->
     <section class="bg-gradient-to-br from-primary to-secondary text-white py-20">

@@ -14,58 +14,30 @@ class HomeController
             // Log the start of the method
             error_log("HomeController@index started");
 
-            // Get database instance
-            $db = \App\Core\Database::getInstance();
-            error_log("Database connection successful");
+            // Fetch featured, recent properties and stats
+            $featuredProperties = Property::getFeatured(6);
+            $recentProperties = Property::getRecentlyAdded(6);
+            $stats = Property::getStatistics();
 
-            // Try to fetch some properties
-            $query = "SELECT COUNT(*) as count FROM properties";
-            $result = $db->getConnection()->query($query);
-            $count = $result->fetch()['count'];
-            error_log("Found $count properties");
+            error_log("Fetched properties and stats");
 
-            // Load the view
-            require_once BASE_PATH . '/resources/views/home/index.php';
-            error_log("View loaded successfully");
+            // Render the view with explicit layout 'layouts.main'
+            View::render('home/index', [
+                'title' => 'SecureStay - Safe Student Accommodation',
+                'featuredProperties' => $featuredProperties,
+                'recentProperties' => $recentProperties,
+                'stats' => $stats,
+                'layout' => 'layouts.main'  // explicitly set default layout
+            ]);
+
+            error_log("View rendered successfully");
 
         } catch (\Exception $e) {
             error_log("Error in HomeController@index: " . $e->getMessage());
-            throw $e; // This will be caught by our exception handler
+            throw $e; // Will be caught by global exception handler
         }
     }
 
-    // public function index()
-    // {
-    //     // echo "Welcome home";
-    //     $featuredProperties = Property::getFeatured(6);
-    //     $recentProperties = Property::getRecentlyAdded(6);
-    //     $stats = Property::getStatistics();
-
-    //     View::render('home/index', [
-    //         'title' => 'SecureStay - Safe Student Accommodation',
-    //         'featuredProperties' => $featuredProperties,
-    //         'recentProperties' => $recentProperties,
-    //         'stats' => $stats
-    //     ]);
-    // }
-
-    // public function index()
-    // {
-    //     echo "Step 1<br>";
-    //     $featuredProperties = \App\Models\Property::getFeatured(6);
-    //     echo "Step 2<br>";
-    //     $recentProperties = \App\Models\Property::getRecentlyAdded(6);
-    //     echo "Step 3<br>";
-    //     $stats = \App\Models\Property::getStatistics();
-    //     echo "Step 4<br>";
-
-    //     View::render('home/index', [
-    //         'title' => 'SecureStay - Safe Student Accommodation',
-    //         'featuredProperties' => $featuredProperties,
-    //         'recentProperties' => $recentProperties,
-    //         'stats' => $stats
-    //     ]);
-    // }
 
 
     public function howItWorks()

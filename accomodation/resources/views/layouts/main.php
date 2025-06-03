@@ -4,21 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $title ?? 'SecureStay - Student Accommodation' ?></title>
-    <!-- Add Tailwind CSS with integrity check -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Add Font Awesome with integrity check -->
-    <link rel="stylesheet" 
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" 
-          integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" 
-          crossorigin="anonymous" 
-          referrerpolicy="no-referrer" />
-    
-    <!-- Add Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" 
-          rel="stylesheet">
-
-    <!-- Add Tailwind configuration -->
     <script>
         tailwind.config = {
             theme: {
@@ -30,26 +16,18 @@
                         success: '#4CAF50',
                         warning: '#FFC107',
                         error: '#F44336'
+                    },
+                    fontFamily: {
+                        'heading': ['Montserrat', 'sans-serif'],
+                        'body': ['Open Sans', 'sans-serif']
                     }
                 }
             }
         }
     </script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Ensure basic styles work even if Tailwind fails to load */
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Open Sans', sans-serif;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 1rem;
-        }
-        
         .verification-badge {
             position: relative;
             display: inline-flex;
