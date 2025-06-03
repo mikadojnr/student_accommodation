@@ -38,3 +38,5 @@ database/migrations/*.lock
 
 # Ignore backup files
 *~
+
+.gitignore
