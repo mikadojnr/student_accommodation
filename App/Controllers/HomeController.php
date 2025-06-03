@@ -10,18 +10,44 @@ class HomeController
 {
     public function index()
     {
-        // echo "Welcome home";
-        $featuredProperties = Property::getFeatured(6);
-        $recentProperties = Property::getRecentlyAdded(6);
-        $stats = Property::getStatistics();
+        try {
+            // Log the start of the method
+            error_log("HomeController@index started");
 
-        View::render('home/index', [
-            'title' => 'SecureStay - Safe Student Accommodation',
-            'featuredProperties' => $featuredProperties,
-            'recentProperties' => $recentProperties,
-            'stats' => $stats
-        ]);
+            // Get database instance
+            $db = \App\Core\Database::getInstance();
+            error_log("Database connection successful");
+
+            // Try to fetch some properties
+            $query = "SELECT COUNT(*) as count FROM properties";
+            $result = $db->getConnection()->query($query);
+            $count = $result->fetch()['count'];
+            error_log("Found $count properties");
+
+            // Load the view
+            require_once BASE_PATH . '/resources/views/home/index.php';
+            error_log("View loaded successfully");
+
+        } catch (\Exception $e) {
+            error_log("Error in HomeController@index: " . $e->getMessage());
+            throw $e; // This will be caught by our exception handler
+        }
     }
+
+    // public function index()
+    // {
+    //     // echo "Welcome home";
+    //     $featuredProperties = Property::getFeatured(6);
+    //     $recentProperties = Property::getRecentlyAdded(6);
+    //     $stats = Property::getStatistics();
+
+    //     View::render('home/index', [
+    //         'title' => 'SecureStay - Safe Student Accommodation',
+    //         'featuredProperties' => $featuredProperties,
+    //         'recentProperties' => $recentProperties,
+    //         'stats' => $stats
+    //     ]);
+    // }
 
     // public function index()
     // {

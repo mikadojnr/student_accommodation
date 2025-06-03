@@ -4,6 +4,55 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+// Debug mode
+define('DEBUG', true);
+
+// Add error and exception handlers for debugging
+if (DEBUG) {
+    set_error_handler(function($errno, $errstr, $errfile, $errline) {
+        $error_type = match($errno) {
+            E_ERROR => 'Error',
+            E_WARNING => 'Warning',
+            E_PARSE => 'Parse Error',
+            E_NOTICE => 'Notice',
+            E_CORE_ERROR => 'Core Error',
+            E_CORE_WARNING => 'Core Warning',
+            E_COMPILE_ERROR => 'Compile Error',
+            E_COMPILE_WARNING => 'Compile Warning',
+            E_USER_ERROR => 'User Error',
+            E_USER_WARNING => 'User Warning',
+            E_USER_NOTICE => 'User Notice',
+            default => "Unknown Error ($errno)"
+        };
+        
+        echo "<div style='background: #f8d7da; color: #721c24; padding: 10px; margin: 10px; border: 1px solid #f5c6cb; border-radius: 4px;'>";
+        echo "<h3 style='margin-top: 0;'>$error_type</h3>";
+        echo "<p><strong>Message:</strong> $errstr</p>";
+        echo "<p><strong>File:</strong> $errfile</p>";
+        echo "<p><strong>Line:</strong> $errline</p>";
+        echo "</div>";
+        
+        // Log the error
+        error_log("$error_type: $errstr in $errfile on line $errline");
+        
+        // Don't execute PHP internal error handler
+        return true;
+    });
+
+    set_exception_handler(function($e) {
+        echo "<div style='background: #f8d7da; color: #721c24; padding: 10px; margin: 10px; border: 1px solid #f5c6cb; border-radius: 4px;'>";
+        echo "<h3 style='margin-top: 0;'>Uncaught Exception</h3>";
+        echo "<p><strong>Message:</strong> " . $e->getMessage() . "</p>";
+        echo "<p><strong>File:</strong> " . $e->getFile() . "</p>";
+        echo "<p><strong>Line:</strong> " . $e->getLine() . "</p>";
+        echo "<p><strong>Trace:</strong></p>";
+        echo "<pre>" . $e->getTraceAsString() . "</pre>";
+        echo "</div>";
+        
+        // Log the exception
+        error_log("Uncaught Exception: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
+    });
+}
 
 // Start session
 session_start();
