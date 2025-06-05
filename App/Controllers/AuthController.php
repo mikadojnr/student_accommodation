@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Core\View;
 use App\Models\User;
+use App\Models\Verification;
 
 class AuthController
 {
@@ -88,67 +89,68 @@ class AuthController
         View::render('auth/register', ['title' => 'Register - SecureStay']);
     }
 
-    public function register()
+   public function register()
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            View::redirect('/register');
-            return;
+        // Verify CSRF token
+        if (!verify_csrf_token($_POST['csrf_token'])) {
+            $_SESSION['errors'] = ['csrf_token' => 'Invalid CSRF token'];
+            redirect('/register');
         }
 
-        $data = [
-            'first_name' => trim($_POST['first_name'] ?? ''),
-            'last_name' => trim($_POST['last_name'] ?? ''),
-            'email' => trim($_POST['email'] ?? ''),
-            'password' => $_POST['password'] ?? '',
-            'password_confirmation' => $_POST['password_confirmation'] ?? '',
-            'user_type' => $_POST['user_type'] ?? 'student',
-            'phone' => trim($_POST['phone'] ?? ''),
-            'university' => trim($_POST['university'] ?? ''),
-            'terms' => isset($_POST['terms'])
-        ];
-
-        // Validation
-        $errors = $this->validateRegistration($data);
+        // Validate input
+        $errors = $this->validateRegistrationInput($_POST);
 
         if (!empty($errors)) {
             $_SESSION['errors'] = $errors;
-            $_SESSION['old'] = $data;
-            View::redirect('/register');
-            return;
+            $_SESSION['old'] = $_POST;
+            redirect('/register');
         }
 
         // Create user
         try {
-            $userId = User::create([
-                'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
-                'email' => $data['email'],
-                'password' => $data['password'],
-                'user_type' => $data['user_type'],
-                'phone' => $data['phone'],
-                'university' => $data['university']
-            ]);
+            $userData = [
+                'first_name' => sanitize($_POST['first_name']),
+                'last_name' => sanitize($_POST['last_name']),
+                'email' => sanitize($_POST['email']),
+                'phone' => !empty($_POST['phone']) ? sanitize($_POST['phone']) : null,
+                'university' => !empty($_POST['university']) ? sanitize($_POST['university']) : null,
+                'password' => $_POST['password'],
+                'user_type' => $_POST['user_type'],
+                'verification_status' => 'unverified'
+            ];
 
-            if ($userId) {
-                $_SESSION['success'] = 'Registration successful! Please complete your verification to access all features.';
-                
-                // Auto-login
-                session_regenerate_id(true);
-                $_SESSION['user_id'] = $userId;
-                $_SESSION['user_name'] = $data['first_name'] . ' ' . $data['last_name'];
-                $_SESSION['user_type'] = $data['user_type'];
+            $user = User::create($userData);
 
-                View::redirect('/verification');
+            if ($user) {
+                // Create initial verification record
+                Verification::create([
+                    'user_id' => $user->id,
+                    'identity_status' => 'not_started',
+                    'address_status' => 'not_started',
+                    'student_status' => $user->user_type === 'student' ? 'not_started' : null,
+                    'biometric_status' => 'not_started'
+                ]);
+
+                // Log the user in
+                $_SESSION['user_id'] = $user->id;
+                logActivity("User registered: {$user->email}", 'info');
+
+                // Redirect based on user type
+                $redirectPath = $user->user_type === 'landlord' ? '/dashboard/landlord' : '/dashboard/student';
+                redirect($redirectPath);
             } else {
-                $_SESSION['error'] = 'Registration failed. Please try again.';
-                View::redirect('/register');
+                $_SESSION['errors'] = ['general' => 'Failed to create user'];
+                $_SESSION['old'] = $_POST;
+                redirect('/register');
             }
         } catch (\Exception $e) {
-            $_SESSION['error'] = 'Registration failed: ' . $e->getMessage();
-            $_SESSION['old'] = $data;
-            View::redirect('/register');
+            logActivity("Registration error: " . $e->getMessage(), 'error');
+            $_SESSION['errors'] = ['general' => 'An error occurred during registration'];
+            $_SESSION['old'] = $_POST;
+            redirect('/register');
         }
     }
+
 
     public function logout()
     {
@@ -163,47 +165,62 @@ class AuthController
         View::redirect('/');
     }
 
-    private function validateRegistration($data)
+    
+
+    private function validateRegistrationInput($data)
     {
         $errors = [];
 
         // Required fields
-        if (empty($data['first_name'])) {
-            $errors['first_name'] = 'First name is required';
-        }
-        if (empty($data['last_name'])) {
-            $errors['last_name'] = 'Last name is required';
-        }
-        if (empty($data['email'])) {
-            $errors['email'] = 'Email is required';
-        } elseif (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-            $errors['email'] = 'Invalid email format';
-        } elseif (User::findByEmail($data['email'])) {
-            $errors['email'] = 'Email already registered';
+        $requiredFields = [
+            'first_name' => 'First name',
+            'last_name' => 'Last name',
+            'email' => 'Email',
+            'password' => 'Password',
+            'password_confirmation' => 'Password confirmation',
+            'user_type' => 'User type',
+            'terms' => 'Terms and conditions'
+        ];
+
+        foreach ($requiredFields as $field => $label) {
+            if ($error = validateRequired($data[$field] ?? '', $label)) {
+                $errors[$field] = $error;
+            }
         }
 
-        if (empty($data['password'])) {
-            $errors['password'] = 'Password is required';
-        } elseif (strlen($data['password']) < 8) {
-            $errors['password'] = 'Password must be at least 8 characters';
-        } elseif ($data['password'] !== $data['password_confirmation']) {
-            $errors['password_confirmation'] = 'Passwords do not match';
-        }
-
-        if (!in_array($data['user_type'], ['student', 'landlord'])) {
+        // Validate user type
+        if (!in_array($data['user_type'] ?? '', ['student', 'landlord'])) {
             $errors['user_type'] = 'Invalid user type';
         }
 
-        if (!empty($data['phone']) && !preg_match('/^[\+]?[1-9][\d]{0,15}$/', $data['phone'])) {
+        // Validate email
+        if (!$error = validateEmail($data['email'] ?? '')) {
+            // Check if email is unique
+            if (User::findByEmail($data['email'])) {
+                $errors['email'] = 'Email is already registered';
+            }
+        } else {
+            $errors['email'] = $error;
+        }
+
+        // Validate password
+        if ($error = validateMinLength($data['password'] ?? '', 8, 'Password')) {
+            $errors['password'] = $error;
+        }
+
+        // Validate password confirmation
+        if (($data['password'] ?? '') !== ($data['password_confirmation'] ?? '')) {
+            $errors['password_confirmation'] = 'Passwords do not match';
+        }
+
+        // Validate phone (if provided)
+        if (!empty($data['phone']) && !isValidPhone($data['phone'])) {
             $errors['phone'] = 'Invalid phone number format';
         }
 
+        // Validate university (if provided and user is student)
         if ($data['user_type'] === 'student' && empty($data['university'])) {
             $errors['university'] = 'University is required for students';
-        }
-
-        if (!$data['terms']) {
-            $errors['terms'] = 'You must accept the terms and conditions';
         }
 
         return $errors;

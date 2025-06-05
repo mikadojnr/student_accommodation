@@ -50,7 +50,7 @@ function verify_csrf_token($token)
 
 function formatPrice($price)
 {
-    return '£' . number_format($price, 0);
+    return '₦' . number_format($price, 0);
 }
 
 function formatDate($date)
